@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 180" role="img" aria-label="Level 4 icon">
+  <rect width="220" height="180" rx="28" fill="#dcffea"/>
+  <rect x="45" y="55" width="132" height="68" rx="20" fill="#fff"/>
+  <text x="70" y="98" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#29a36a">p</text>
+  <path d="M101 92h54" stroke="#29a36a" stroke-width="9" stroke-linecap="round" stroke-dasharray="12 12"/>
+  <circle cx="169" cy="126" r="32" fill="#ff8aa6"/>
+  <text x="169" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">4</text>
+</svg>

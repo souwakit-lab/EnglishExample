@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 320" role="img" aria-label="Cartoon owl teacher">
+  <defs><filter id="s"><feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#28415a" flood-opacity=".2"/></filter></defs>
+  <rect width="420" height="320" rx="28" fill="#dff7ff"/>
+  <circle cx="334" cy="60" r="34" fill="#ffe08a"/>
+  <path d="M50 270c54-55 110-75 169-60 59 15 109 13 151-6v116H50z" fill="#92df94"/>
+  <g filter="url(#s)">
+    <path d="M145 95c8-45 41-72 86-72s78 27 86 72c21 16 31 40 27 72-7 56-51 95-113 95s-106-39-113-95c-4-32 6-56 27-72z" fill="#8c6ff7"/>
+    <path d="M160 97l-18-52 53 20zM302 97l18-52-53 20z" fill="#6e55d8"/>
+    <circle cx="195" cy="130" r="42" fill="#fff"/>
+    <circle cx="267" cy="130" r="42" fill="#fff"/>
+    <circle cx="195" cy="132" r="14" fill="#25364d"/>
+    <circle cx="267" cy="132" r="14" fill="#25364d"/>
+    <circle cx="200" cy="126" r="5" fill="#fff"/>
+    <circle cx="272" cy="126" r="5" fill="#fff"/>
+    <path d="M217 165l14 20 14-20z" fill="#ffbd38"/>
+    <rect x="143" y="208" width="176" height="60" rx="14" fill="#fff7be"/>
+    <text x="231" y="246" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="800" fill="#445">ABC</text>
+    <path d="M92 194l47-19 8 18-47 19z" fill="#ffcf57"/>
+    <path d="M325 175l47 19-8 18-47-19z" fill="#ffcf57"/>
+  </g>
+</svg>

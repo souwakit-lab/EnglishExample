@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vocabulary Quest 生字闖關任務 - 學生答題</title>
+  <style>
+    :root {
+      --ink: #243044;
+      --muted: #6a7890;
+      --line: #dce6f2;
+      --panel: #ffffff;
+      --blue: #4aa8ff;
+      --green: #35c987;
+      --pink: #ff7396;
+      --yellow: #ffc94d;
+      --purple: #8067e8;
+      --bg: #f6fbff;
+      --shadow: 0 16px 38px rgba(36, 48, 68, .12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 8%, rgba(255, 201, 77, .3), transparent 30%),
+        radial-gradient(circle at 86% 15%, rgba(128, 103, 232, .2), transparent 28%),
+        linear-gradient(180deg, #f5fbff 0%, #fff7dd 100%);
+      min-height: 100vh;
+    }
+    button, input, select { font: inherit; }
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 18px;
+      min-height: 50px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 8px 0 rgba(36, 48, 68, .12);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.03); }
+    button:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 rgba(36, 48, 68, .12); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.good { background: var(--green); }
+    button.secondary { background: var(--purple); }
+    button.warn { background: var(--yellow); color: #563c00; }
+    button.danger { background: var(--pink); }
+    button.ghost { background: #eef5ff; color: var(--ink); box-shadow: none; border: 1px solid var(--line); }
+    input, select {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 15px;
+      padding: 13px 15px;
+      background: #fff;
+      color: var(--ink);
+      outline: 0;
+      min-height: 50px;
+    }
+    input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(74, 168, 255, .16); }
+    .wrap { width: min(1120px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 22px;
+      align-items: center;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,.8);
+      border-radius: 30px;
+      background: rgba(255,255,255,.76);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      margin-bottom: 18px;
+    }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(32px, 5vw, 58px); line-height: 1.05; letter-spacing: 0; }
+    .hero p { margin: 0; color: var(--muted); font-size: 18px; }
+    .hero img { width: 100%; border-radius: 24px; display: block; }
+    .panel {
+      background: rgba(255,255,255,.9);
+      border: 1px solid rgba(220,230,242,.9);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      overflow: hidden;
+    }
+    .panel h2 { margin: 0 0 14px; font-size: 25px; }
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: end; }
+    .mini { color: var(--muted); font-size: 14px; margin: 6px 0 12px; }
+    .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+    .level-card {
+      min-height: 190px;
+      padding: 12px;
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .level-card:hover { transform: translateY(-3px); border-color: var(--blue); box-shadow: 0 12px 24px rgba(36,48,68,.1); }
+    .level-card.active { border-color: var(--green); box-shadow: 0 0 0 5px rgba(53, 201, 135, .18); }
+    .level-card img { width: 100%; aspect-ratio: 11 / 9; object-fit: contain; display: block; }
+    .level-card strong { display: block; font-size: 18px; margin-top: 4px; }
+    .level-card span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .message { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #eef5ff; color: #35527a; display: none; }
+    .message.show { display: block; }
+    .message.error { background: #ffe8ee; color: #9d2747; }
+    .message.ok { background: #e5fff1; color: #146b45; }
+    .hidden { display: none !important; }
+    .quiz-layout { display: grid; grid-template-columns: 230px 1fr; gap: 18px; align-items: start; }
+    .mascot { width: 100%; border-radius: 24px; background: #fff; }
+    .hud { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+    .hud-card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
+    .hud-card strong { display: block; font-size: 22px; margin-top: 4px; }
+    .progress { height: 18px; border-radius: 999px; background: #edf3fb; overflow: hidden; margin: 8px 0 18px; }
+    .progress div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--blue)); border-radius: inherit; transition: width .2s ease; }
+    .question {
+      background: #fff;
+      border: 2px dashed #bcd8f4;
+      border-radius: 22px;
+      padding: 22px;
+      font-size: clamp(24px, 4vw, 42px);
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 14px;
+      line-height: 1.25;
+    }
+    .hint { text-align: center; color: var(--muted); font-size: 18px; margin: -4px 0 16px; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .option {
+      background: #fff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      box-shadow: none;
+      text-align: left;
+    }
+    .option.selected { border-color: var(--purple); background: #f0eaff; }
+    .answer-input { font-size: 24px; text-align: center; font-weight: 800; }
+    .feedback {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 14px;
+      align-items: center;
+      border-radius: 22px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      margin-top: 14px;
+    }
+    .feedback img { width: 100%; }
+    .feedback h3 { margin: 0 0 8px; font-size: 26px; }
+    .feedback p { margin: 5px 0; }
+    .result-top {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 18px;
+      align-items: center;
+    }
+    .score-big { font-size: clamp(42px, 8vw, 78px); font-weight: 950; line-height: 1; margin: 0; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; margin-top: 14px; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f2f7ff; color: #38506f; font-size: 14px; }
+    @media (max-width: 960px) {
+      .hero, .quiz-layout { grid-template-columns: 1fr; }
+      .setup-grid { grid-template-columns: 1fr; }
+      .level-grid { grid-template-columns: repeat(2, 1fr); }
+      .mascot { max-width: 220px; margin: 0 auto; }
+    }
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 18px, 1120px); padding-top: 12px; }
+      .hero, .panel { border-radius: 18px; padding: 16px; }
+      .level-grid, .options, .hud, .feedback, .result-top { grid-template-columns: 1fr; }
+      button { width: 100%; }
+      .feedback img, .result-top img { width: 170px; margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section id="home" class="home">
+      <section class="hero">
+        <div>
+          <h1>Vocabulary Quest<br>生字闖關任務</h1>
+          <p>選擇 Level，完成英文生字挑戰，幫小機器人收集星星徽章。</p>
+          <p id="wordStatus" class="mini"></p>
+        </div>
+        <img src="vq-hero-ai.png" alt="Vocabulary Quest 主視覺插圖">
+      </section>
+
+      <section class="panel">
+        <h2>開始任務</h2>
+        <div class="setup-grid">
+          <label>學生姓名
+            <input id="studentName" placeholder="不填則使用「訪客」">
+          </label>
+          <label>題目數量
+            <select id="questionCount">
+              <option value="all">使用全部題目</option>
+              <option value="15">隨機抽取 15 題</option>
+              <option value="10">隨機抽取 10 題</option>
+              <option value="5">隨機抽取 5 題</option>
+            </select>
+          </label>
+          <div>
+            <button id="startBtn" class="good">開始闖關</button>
+          </div>
+        </div>
+        <p class="mini">題庫會自動讀取教師頁儲存的資料。若沒有題庫，可先請老師在 teacher.html 儲存題庫。</p>
+        <div id="homeMsg" class="message"></div>
+
+        <div class="level-grid" id="levelGrid"></div>
+      </section>
+    </section>
+
+    <section id="quiz" class="panel hidden">
+      <div class="quiz-layout">
+        <img class="mascot" src="vq-mascot-ai.png" alt="答題頁吉祥物">
+        <div>
+          <div class="hud">
+            <div class="hud-card">學生<strong id="hudName">訪客</strong></div>
+            <div class="hud-card">Level<strong id="hudLevel">1</strong></div>
+            <div class="hud-card">題號<strong id="hudIndex">1/1</strong></div>
+            <div class="hud-card">分數<strong id="hudScore">0</strong></div>
+          </div>
+          <div class="progress"><div id="progressFill"></div></div>
+          <div id="questionText" class="question"></div>
+          <div id="hintText" class="hint"></div>
+          <div id="answerArea"></div>
+          <div class="row" style="margin-top:14px">
+            <button id="submitBtn" class="good">提交答案</button>
+            <button id="nextBtn" class="secondary hidden">下一題</button>
+            <button id="quitBtn" class="ghost">返回首頁</button>
+          </div>
+          <div id="quizMsg" class="message"></div>
+          <div id="feedback" class="feedback hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="panel hidden">
+      <div class="result-top">
+        <img id="resultImage" src="vq-correct-ai.png" alt="任務完成插圖">
+        <div>
+          <h2>任務完成</h2>
+          <p id="scoreText" class="score-big">0/0</p>
+          <p id="accuracyText" class="mini"></p>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button id="retryWrongBtn" class="warn">重練錯題</button>
+        <button id="againBtn" class="good">再玩一次</button>
+        <button id="backHomeBtn" class="ghost">返回首頁</button>
+      </div>
+      <h3>錯題清單</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>題目</th><th>你的答案</th><th>正確答案</th><th>中文翻譯</th><th>句子</th></tr></thead>
+          <tbody id="wrongTable"></tbody>
+        </table>
+      </div>
+      <div id="resultMsg" class="message show ok"></div>
+    </section>
+  </main>
+
+  <script>
+    const KEYS = {
+      words: "vocabularyQuest_words",
+      records: "vocabularyQuest_records",
+      name: "vocabularyQuest_student_name",
+      lastResult: "vocabularyQuest_student_lastResult"
+    };
+    const demoWords = [
+      ["explore","探索","We will explore the forest tomorrow."],
+      ["protect","保護","We should protect animals and nature."],
+      ["invent","發明","Scientists invent useful machines."],
+      ["ancient","古代的","This museum has many ancient objects."],
+      ["journey","旅程","Our journey to the mountains was exciting."],
+      ["dangerous","危險的","It is dangerous to swim during a storm."],
+      ["medicine","藥物","The doctor gave me some medicine."],
+      ["borrow","借入","Can I borrow your dictionary?"],
+      ["improve","改善","Reading every day can improve your English."],
+      ["creative","有創意的","She is a creative student who loves drawing."],
+      ["culture","文化","We learned about Japanese culture in class."],
+      ["environment","環境","Plastic waste is bad for the environment."],
+      ["confident","有信心的","He feels confident before the speech."],
+      ["challenge","挑戰","This puzzle is a big challenge for me."],
+      ["solution","解決方法","We need to find a solution to the problem."]
+    ].map(([word, meaning_zh, sentence]) => ({ word, meaning_zh, sentence }));
+    const levelInfo = {
+      1: ["英文配中文", "看英文，選中文", "vq-level-1-ai.png"],
+      2: ["中文選英文", "看中文，選英文", "vq-level-2-ai.png"],
+      3: ["例句選字", "看句子，選單字", "vq-level-3-ai.png"],
+      4: ["首字母填字", "有首字母提示", "vq-level-4-ai.png"],
+      5: ["無提示填字", "只看例句作答", "vq-level-5-ai.png"]
+    };
+
+    let words = loadWords();
+    let selectedLevel = 1;
+    let quizItems = [];
+    let currentIndex = 0;
+    let score = 0;
+    let answered = false;
+    let selectedAnswer = "";
+    let results = [];
+    let retrySource = null;
+
+    function safeLoad(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+    function safeSave(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    function loadWords() {
+      const stored = safeLoad(KEYS.words, null);
+      if (Array.isArray(stored)) return stored;
+      return demoWords.slice();
+    }
+    function show(id, text, type = "") {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = "message show " + type;
+    }
+    function hide(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+    function showSection(id) {
+      ["home","quiz","result"].forEach(section => document.getElementById(section).classList.toggle("hidden", section !== id));
+    }
+    function shuffle(array) {
+      const copy = array.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+    function blankSentence(item, withFirstLetter) {
+      const escaped = item.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp("\\b" + escaped + "\\b", "i");
+      if (regex.test(item.sentence)) {
+        return item.sentence.replace(regex, withFirstLetter ? item.word[0] + "______" : "______");
+      }
+      return withFirstLetter ? item.word[0] + "______  (" + item.meaning_zh + ")" : "______  (" + item.meaning_zh + ")";
+    }
+    function makeChoices(item, field) {
+      const correct = item[field];
+      const wrongs = shuffle(words.filter(w => w.word !== item.word).map(w => w[field])).slice(0, 3);
+      return shuffle([correct, ...wrongs]);
+    }
+    function questionFor(item) {
+      if (selectedLevel === 1) return { prompt: item.word, hint: "請選出正確的中文翻譯", correct: item.meaning_zh, choices: makeChoices(item, "meaning_zh"), mode: "choice" };
+      if (selectedLevel === 2) return { prompt: "「" + item.meaning_zh + "」的英文是？", hint: "請選出正確英文單字", correct: item.word, choices: makeChoices(item, "word"), mode: "choice" };
+      if (selectedLevel === 3) return { prompt: blankSentence(item, false), hint: "請選出能放入句子的單字", correct: item.word, choices: makeChoices(item, "word"), mode: "choice" };
+      if (selectedLevel === 4) return { prompt: blankSentence(item, true), hint: "請輸入完整英文單字，不分大小寫", correct: item.word, mode: "input" };
+      return { prompt: blankSentence(item, false), hint: "請輸入完整英文單字，不分大小寫", correct: item.word, mode: "input" };
+    }
+    function startQuiz(sourceItems) {
+      const name = document.getElementById("studentName").value.trim() || "訪客";
+      localStorage.setItem(KEYS.name, name);
+      if (!selectedLevel) return show("homeMsg", "請先選擇 Level。", "error");
+      words = loadWords().filter(w => w.word && w.meaning_zh && w.sentence);
+      if (!words.length) return show("homeMsg", "目前沒有題庫，請先請老師在 teacher.html 儲存題庫。", "error");
+      const base = sourceItems || words;
+      const countValue = document.getElementById("questionCount").value;
+      const count = countValue === "all" ? base.length : Number(countValue);
+      quizItems = shuffle(base).slice(0, Math.min(base.length, count));
+      currentIndex = 0;
+      score = 0;
+      answered = false;
+      selectedAnswer = "";
+      results = [];
+      retrySource = sourceItems || null;
+      document.getElementById("hudName").textContent = name;
+      document.getElementById("hudLevel").textContent = selectedLevel;
+      showSection("quiz");
+      renderQuestion();
+    }
+    function renderQuestion() {
+      answered = false;
+      selectedAnswer = "";
+      document.getElementById("submitBtn").classList.remove("hidden");
+      document.getElementById("nextBtn").classList.add("hidden");
+      document.getElementById("quizMsg").className = "message";
+      document.getElementById("feedback").classList.add("hidden");
+      const item = quizItems[currentIndex];
+      const q = questionFor(item);
+      document.getElementById("hudIndex").textContent = (currentIndex + 1) + "/" + quizItems.length;
+      document.getElementById("hudScore").textContent = score;
+      document.getElementById("progressFill").style.width = Math.round((currentIndex / quizItems.length) * 100) + "%";
+      document.getElementById("questionText").textContent = q.prompt;
+      document.getElementById("hintText").textContent = q.hint;
+      const area = document.getElementById("answerArea");
+      if (q.mode === "choice") {
+        area.innerHTML = `<div class="options">${q.choices.map((choice, index) =>
+          `<button class="option" data-answer="${escapeAttr(choice)}">${String.fromCharCode(65 + index)}. ${choice}</button>`
+        ).join("")}</div>`;
+      } else {
+        area.innerHTML = `<input id="textAnswer" class="answer-input" autocomplete="off" placeholder="輸入答案">`;
+        setTimeout(() => document.getElementById("textAnswer").focus(), 20);
+      }
+    }
+    function escapeAttr(text) {
+      return String(text).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+    }
+    function submitAnswer() {
+      if (answered) return;
+      const item = quizItems[currentIndex];
+      const q = questionFor(item);
+      if (q.mode === "input") {
+        const input = document.getElementById("textAnswer");
+        selectedAnswer = (input.value || "").trim();
+        if (!selectedAnswer) return show("quizMsg", "請先輸入答案。", "error");
+      }
+      if (!selectedAnswer) return show("quizMsg", "請先選擇答案。", "error");
+      const isCorrect = selectedAnswer.trim().toLowerCase() === q.correct.trim().toLowerCase();
+      if (isCorrect) score += 1;
+      answered = true;
+      const result = {
+        word: item.word,
+        meaning_zh: item.meaning_zh,
+        sentence: item.sentence,
+        question: q.prompt,
+        studentAnswer: selectedAnswer,
+        correctAnswer: q.correct,
+        isCorrect
+      };
+      results.push(result);
+      renderFeedback(result);
+      document.getElementById("hudScore").textContent = score;
+      document.getElementById("submitBtn").classList.add("hidden");
+      document.getElementById("nextBtn").classList.remove("hidden");
+    }
+    function renderFeedback(result) {
+      const box = document.getElementById("feedback");
+      box.classList.remove("hidden");
+      box.innerHTML = `
+        <img src="${result.isCorrect ? "vq-correct-ai.png" : "vq-try-again-ai.png"}" alt="${result.isCorrect ? "答對插圖" : "鼓勵插圖"}">
+        <div>
+          <h3>${result.isCorrect ? "Correct! 太好了！" : "Not quite. 再試會更好！"}</h3>
+          ${result.isCorrect ? "" : `<p><strong>你的答案：</strong>${result.studentAnswer}</p>`}
+          <p><strong>答案：</strong>${result.correctAnswer}</p>
+          <p><strong>中文翻譯：</strong>${result.meaning_zh}</p>
+          <p><strong>句子：</strong>${result.sentence}</p>
+        </div>`;
+      document.getElementById("progressFill").style.width = Math.round(((currentIndex + 1) / quizItems.length) * 100) + "%";
+    }
+    function nextQuestion() {
+      if (currentIndex < quizItems.length - 1) {
+        currentIndex += 1;
+        renderQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+    function finishQuiz() {
+      const total = quizItems.length;
+      const wrong = total - score;
+      const accuracy = total ? Math.round((score / total) * 100) : 0;
+      const record = {
+        id: "vq-" + Date.now() + "-" + Math.random().toString(16).slice(2),
+        studentName: document.getElementById("studentName").value.trim() || "訪客",
+        datetime: new Date().toLocaleString("zh-Hant"),
+        level: selectedLevel,
+        total,
+        correct: score,
+        wrong,
+        accuracy,
+        results
+      };
+      const records = safeLoad(KEYS.records, []);
+      records.push(record);
+      safeSave(KEYS.records, records);
+      safeSave(KEYS.lastResult, record);
+      renderResult(record);
+      showSection("result");
+    }
+    function renderResult(record) {
+      document.getElementById("scoreText").textContent = record.correct + "/" + record.total;
+      document.getElementById("accuracyText").textContent = "正確率 " + record.accuracy + "% · Level " + record.level;
+      document.getElementById("resultImage").src = record.wrong ? "vq-try-again-ai.png" : "vq-correct-ai.png";
+      const wrongItems = record.results.filter(item => !item.isCorrect);
+      document.getElementById("retryWrongBtn").disabled = wrongItems.length === 0;
+      document.getElementById("resultMsg").textContent = wrongItems.length ? "成績已自動儲存到教師看板。可以重練錯題。" : "太好了！全部答對！成績已自動儲存到教師看板。";
+      document.getElementById("wrongTable").innerHTML = wrongItems.length ? wrongItems.map(item => `
+        <tr>
+          <td>${item.question}</td>
+          <td>${item.studentAnswer}</td>
+          <td>${item.correctAnswer}</td>
+          <td>${item.meaning_zh}</td>
+          <td>${item.sentence}</td>
+        </tr>
+      `).join("") : `<tr><td colspan="5">太好了！全部答對！</td></tr>`;
+    }
+    function renderLevels() {
+      document.getElementById("levelGrid").innerHTML = Object.entries(levelInfo).map(([level, info]) => `
+        <button class="level-card ${Number(level) === selectedLevel ? "active" : ""}" data-level="${level}">
+          <img src="${info[2]}" alt="Level ${level} 圖示">
+          <strong>Level ${level}</strong>
+          <span>${info[0]} · ${info[1]}</span>
+        </button>
+      `).join("");
+    }
+    function updateHomeStatus() {
+      words = loadWords();
+      const clean = words.filter(w => w.word && w.meaning_zh && w.sentence);
+      document.getElementById("wordStatus").textContent = clean.length
+        ? "目前題庫共有 " + clean.length + " 個單字。"
+        : "目前沒有題庫，請先請老師在 teacher.html 儲存題庫。";
+    }
+
+    document.getElementById("levelGrid").addEventListener("click", event => {
+      const card = event.target.closest("[data-level]");
+      if (!card) return;
+      selectedLevel = Number(card.dataset.level);
+      renderLevels();
+    });
+    document.getElementById("startBtn").addEventListener("click", () => startQuiz());
+    document.getElementById("answerArea").addEventListener("click", event => {
+      const option = event.target.closest("[data-answer]");
+      if (!option || answered) return;
+      document.querySelectorAll(".option").forEach(btn => btn.classList.remove("selected"));
+      option.classList.add("selected");
+      selectedAnswer = option.dataset.answer;
+    });
+    document.getElementById("answerArea").addEventListener("keydown", event => {
+      if (event.key === "Enter") submitAnswer();
+    });
+    document.getElementById("submitBtn").addEventListener("click", submitAnswer);
+    document.getElementById("nextBtn").addEventListener("click", nextQuestion);
+    document.getElementById("quitBtn").addEventListener("click", () => showSection("home"));
+    document.getElementById("againBtn").addEventListener("click", () => startQuiz());
+    document.getElementById("backHomeBtn").addEventListener("click", () => {
+      updateHomeStatus();
+      showSection("home");
+    });
+    document.getElementById("retryWrongBtn").addEventListener("click", () => {
+      const last = safeLoad(KEYS.lastResult, null);
+      const wrongWords = last ? last.results.filter(item => !item.isCorrect).map(item => item.word) : [];
+      const retryItems = words.filter(item => wrongWords.includes(item.word));
+      if (!retryItems.length) return show("resultMsg", "沒有錯題可以重練。", "error");
+      startQuiz(retryItems);
+    });
+
+    document.getElementById("studentName").value = localStorage.getItem(KEYS.name) || "";
+    if (!localStorage.getItem(KEYS.words)) safeSave(KEYS.words, demoWords);
+    renderLevels();
+    updateHomeStatus();
+  </script>
+</body>
+</html>

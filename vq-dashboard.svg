@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" role="img" aria-label="Dashboard icon">
+  <rect width="360" height="260" rx="30" fill="#fff6d8"/>
+  <rect x="58" y="52" width="244" height="156" rx="22" fill="#fff"/>
+  <rect x="82" y="143" width="38" height="42" rx="10" fill="#6dd4a8"/>
+  <rect x="142" y="112" width="38" height="73" rx="10" fill="#69b7ff"/>
+  <rect x="202" y="82" width="38" height="103" rx="10" fill="#ff8aa6"/>
+  <path d="M80 102c40 10 69-2 95-30 27 28 61 39 105 31" fill="none" stroke="#ffbe3d" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="80" cy="102" r="10" fill="#ffbe3d"/>
+  <circle cx="175" cy="72" r="10" fill="#ffbe3d"/>
+  <circle cx="280" cy="103" r="10" fill="#ffbe3d"/>
+</svg>

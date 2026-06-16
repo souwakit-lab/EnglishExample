@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" role="img" aria-label="Word robot mascot">
+  <defs><filter id="s"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#20364a" flood-opacity=".22"/></filter></defs>
+  <rect width="360" height="360" rx="34" fill="#fff0c2"/>
+  <g filter="url(#s)">
+    <rect x="92" y="98" width="176" height="146" rx="34" fill="#69d2ff"/>
+    <rect x="117" y="128" width="126" height="68" rx="20" fill="#fff"/>
+    <circle cx="148" cy="162" r="14" fill="#26384e"/>
+    <circle cx="212" cy="162" r="14" fill="#26384e"/>
+    <circle cx="153" cy="156" r="5" fill="#fff"/>
+    <circle cx="217" cy="156" r="5" fill="#fff"/>
+    <path d="M153 202c15 16 39 16 54 0" fill="none" stroke="#26384e" stroke-width="8" stroke-linecap="round"/>
+    <path d="M180 98V58" stroke="#26384e" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="180" cy="47" r="17" fill="#ff6f8f"/>
+    <path d="M91 160H48M269 160h43" stroke="#26384e" stroke-width="12" stroke-linecap="round"/>
+    <circle cx="42" cy="160" r="16" fill="#ffcf57"/>
+    <circle cx="318" cy="160" r="16" fill="#ffcf57"/>
+    <rect x="119" y="244" width="42" height="49" rx="15" fill="#ffcf57"/>
+    <rect x="199" y="244" width="42" height="49" rx="15" fill="#ffcf57"/>
+  </g>
+  <g fill="#fff" opacity=".8">
+    <circle cx="60" cy="73" r="12"/>
+    <circle cx="306" cy="88" r="10"/>
+    <circle cx="292" cy="276" r="14"/>
+  </g>
+</svg>

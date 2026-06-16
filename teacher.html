@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vocabulary Quest 生字闖關任務 - 教師管理</title>
+  <style>
+    :root {
+      --ink: #243044;
+      --muted: #6a7890;
+      --line: #dce6f2;
+      --panel: #ffffff;
+      --blue: #4aa8ff;
+      --green: #35c987;
+      --pink: #ff7396;
+      --yellow: #ffc94d;
+      --purple: #8067e8;
+      --bg: #f6fbff;
+      --shadow: 0 16px 38px rgba(36, 48, 68, .12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 201, 77, .28), transparent 30%),
+        radial-gradient(circle at 88% 12%, rgba(74, 168, 255, .24), transparent 28%),
+        linear-gradient(180deg, #f6fbff 0%, #fff8df 100%);
+      min-height: 100vh;
+    }
+    button, input, textarea, select { font: inherit; }
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      min-height: 46px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 0 rgba(36, 48, 68, .12);
+      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+    }
+    button:hover { transform: translateY(-2px); filter: brightness(1.03); }
+    button:active { transform: translateY(2px); box-shadow: 0 3px 0 rgba(36, 48, 68, .12); }
+    button.secondary { background: var(--purple); }
+    button.good { background: var(--green); }
+    button.warn { background: var(--yellow); color: #563c00; }
+    button.danger { background: var(--pink); }
+    button.ghost { background: #eef5ff; color: var(--ink); box-shadow: none; border: 1px solid var(--line); }
+    input, textarea, select {
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: #fff;
+      color: var(--ink);
+      outline: 0;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(74, 168, 255, .16); }
+    textarea { min-height: 130px; resize: vertical; }
+    .wrap { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 42px; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 22px;
+      align-items: center;
+      margin-bottom: 22px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,.75);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .74);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(30px, 5vw, 54px); line-height: 1.05; letter-spacing: 0; }
+    .hero p { margin: 0; color: var(--muted); font-size: 18px; }
+    .hero img { width: 100%; display: block; border-radius: 24px; }
+    .top-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .panel {
+      background: rgba(255,255,255,.88);
+      border: 1px solid rgba(220,230,242,.9);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+      overflow: hidden;
+    }
+    .panel h2 { margin: 0 0 14px; font-size: 24px; display: flex; align-items: center; gap: 10px; }
+    .panel h2 span { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: #fff0bf; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .full { grid-column: 1 / -1; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .message { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: #eef5ff; color: #35527a; display: none; }
+    .message.show { display: block; }
+    .message.error { background: #ffe8ee; color: #9d2747; }
+    .message.ok { background: #e5fff1; color: #146b45; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f2f7ff; color: #38506f; font-size: 14px; }
+    td input { min-width: 150px; }
+    .mini { color: var(--muted); font-size: 14px; margin: 6px 0 12px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat {
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 16px;
+      min-height: 108px;
+    }
+    .stat strong { display: block; font-size: 30px; margin-top: 8px; }
+    .bar-row { margin: 12px 0; }
+    .bar-label { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; }
+    .bar-track { height: 15px; border-radius: 999px; background: #edf3fb; overflow: hidden; margin-top: 7px; }
+    .bar-fill { height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, var(--green), var(--blue)); }
+    .side-art { width: 150px; max-width: 42%; float: right; margin: 0 0 10px 16px; }
+    .login {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(223,247,255,.96), rgba(255,246,216,.96));
+      padding: 20px;
+    }
+    .login-card {
+      width: min(440px, 100%);
+      border-radius: 26px;
+      background: #fff;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .login-card img { width: 210px; max-width: 70%; }
+    .hidden { display: none !important; }
+    @media (max-width: 900px) {
+      .hero, .grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .wrap { width: min(100% - 18px, 1180px); padding-top: 12px; }
+      .hero, .panel { border-radius: 18px; padding: 16px; }
+      .form-grid, .stats { grid-template-columns: 1fr; }
+      button { width: 100%; }
+      .top-actions button, .row button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="login">
+    <section class="login-card">
+      <img src="vq-teacher-ai.png" alt="貓頭鷹老師插圖">
+      <h1>教師管理入口</h1>
+      <p class="mini">請輸入教師密碼。預設密碼為 teacher123。</p>
+      <input id="passwordInput" type="password" placeholder="教師密碼" autocomplete="current-password">
+      <div class="row" style="margin-top:12px">
+        <button id="loginBtn" class="good">進入管理面板</button>
+      </div>
+      <div id="loginMsg" class="message error"></div>
+    </section>
+  </div>
+
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <h1>Vocabulary Quest<br>生字闖關任務</h1>
+        <p>教師管理面板：準備題庫、查看學生表現、匯出課堂數據。</p>
+        <div class="top-actions">
+          <button class="good" data-scroll="bank">管理題庫</button>
+          <button class="secondary" data-scroll="dashboard">查看看板</button>
+          <button class="ghost" data-scroll="settings">設定</button>
+        </div>
+      </div>
+      <img src="vq-hero-ai.png" alt="Vocabulary Quest 主視覺插圖">
+    </section>
+
+    <section class="grid">
+      <article id="bank" class="panel">
+        <img class="side-art" src="vq-teacher-ai.png" alt="貓頭鷹老師">
+        <h2><span>📚</span>題庫管理</h2>
+        <p class="mini">可從 Excel 複製三欄資料貼上，也可以手動新增。欄位順序：英文單字、中文翻譯、英文句子。</p>
+        <textarea id="pasteBox" placeholder="word&#9;meaning_zh&#9;sentence&#10;explore&#9;探索&#9;We will explore the forest tomorrow."></textarea>
+        <div class="row" style="margin-top:12px">
+          <button id="importBtn">匯入貼上資料</button>
+          <button id="demoBtn" class="warn">使用示範題庫</button>
+          <button id="saveBtn" class="good">儲存題庫</button>
+          <button id="clearWordsBtn" class="danger">清空題庫</button>
+        </div>
+        <div id="wordMsg" class="message"></div>
+
+        <h3>手動新增單字</h3>
+        <div class="form-grid">
+          <input id="newWord" placeholder="英文單字，例如 protect">
+          <input id="newMeaning" placeholder="中文翻譯，例如 保護">
+          <input id="newSentence" class="full" placeholder="英文句子，例如 We should protect animals and nature.">
+          <button id="addWordBtn" class="secondary full">新增到題庫</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2><span>🧾</span>題庫預覽</h2>
+        <p id="wordCount" class="mini">目前 0 個單字</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>英文單字</th><th>中文翻譯</th><th>句子</th><th>操作</th></tr>
+            </thead>
+            <tbody id="wordTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <section id="dashboard" class="panel" style="margin-top:18px">
+      <img class="side-art" src="vq-dashboard-ai.png" alt="數據看板插圖">
+      <h2><span>📊</span>數據看板</h2>
+      <p class="mini">學生在同一個 GitHub Pages 網站完成練習後，紀錄會自動寫入瀏覽器 localStorage，教師頁重新整理即可看到。</p>
+      <div class="stats" id="stats"></div>
+      <h3>Level 表現</h3>
+      <div id="levelBars"></div>
+      <h3>最常錯單字</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>排名</th><th>單字</th><th>中文翻譯</th><th>錯誤次數</th></tr></thead>
+          <tbody id="wrongWords"></tbody>
+        </table>
+      </div>
+      <h3>學生作答紀錄</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>日期時間</th><th>學生</th><th>Level</th><th>分數</th><th>正確率</th><th>錯題</th></tr></thead>
+          <tbody id="recordTable"></tbody>
+        </table>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="copyCsvBtn" class="secondary">複製全部記錄為 CSV</button>
+        <button id="refreshBtn" class="ghost">重新整理看板</button>
+        <button id="clearRecordsBtn" class="danger">清空學生記錄</button>
+      </div>
+      <div id="recordMsg" class="message"></div>
+    </section>
+
+    <section id="settings" class="panel" style="margin-top:18px">
+      <h2><span>⚙️</span>設定與重置</h2>
+      <div class="form-grid">
+        <input id="newPassword" type="password" placeholder="設定新的教師密碼">
+        <button id="changePasswordBtn" class="secondary">修改密碼</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button id="logoutBtn" class="ghost">鎖定教師頁</button>
+      </div>
+      <div id="settingsMsg" class="message"></div>
+    </section>
+  </main>
+
+  <script>
+    const KEYS = {
+      words: "vocabularyQuest_words",
+      records: "vocabularyQuest_records",
+      password: "vocabularyQuest_teacherPassword"
+    };
+    const demoWords = [
+      ["explore","探索","We will explore the forest tomorrow."],
+      ["protect","保護","We should protect animals and nature."],
+      ["invent","發明","Scientists invent useful machines."],
+      ["ancient","古代的","This museum has many ancient objects."],
+      ["journey","旅程","Our journey to the mountains was exciting."],
+      ["dangerous","危險的","It is dangerous to swim during a storm."],
+      ["medicine","藥物","The doctor gave me some medicine."],
+      ["borrow","借入","Can I borrow your dictionary?"],
+      ["improve","改善","Reading every day can improve your English."],
+      ["creative","有創意的","She is a creative student who loves drawing."],
+      ["culture","文化","We learned about Japanese culture in class."],
+      ["environment","環境","Plastic waste is bad for the environment."],
+      ["confident","有信心的","He feels confident before the speech."],
+      ["challenge","挑戰","This puzzle is a big challenge for me."],
+      ["solution","解決方法","We need to find a solution to the problem."]
+    ].map(([word, meaning_zh, sentence]) => ({ word, meaning_zh, sentence }));
+
+    let words = load(KEYS.words, demoWords);
+    let records = load(KEYS.records, []);
+
+    function load(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+    function save(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+    function show(id, text, type = "") {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = "message show " + type;
+    }
+    function teacherPassword() {
+      return localStorage.getItem(KEYS.password) || "teacher123";
+    }
+    function normalizeWord(item) {
+      return {
+        word: String(item.word || "").trim(),
+        meaning_zh: String(item.meaning_zh || item.meaning || "").trim(),
+        sentence: String(item.sentence || "").trim()
+      };
+    }
+    function parsePaste(text) {
+      const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      if (!lines.length) throw new Error("請先貼上題庫資料。");
+      const parsed = [];
+      lines.forEach((line, index) => {
+        const cols = line.includes("\t") ? line.split("\t") : line.split(",");
+        if (index === 0 && /word|英文/i.test(cols[0]) && /meaning|中文/i.test(cols[1] || "")) return;
+        if (cols.length < 3) throw new Error("第 " + (index + 1) + " 行格式不足，請確認有三欄。");
+        const item = normalizeWord({ word: cols[0], meaning_zh: cols[1], sentence: cols.slice(2).join(cols.length > 3 ? "," : "") });
+        if (!item.word || !item.meaning_zh || !item.sentence) throw new Error("第 " + (index + 1) + " 行有空白欄位。");
+        parsed.push(item);
+      });
+      if (!parsed.length) throw new Error("沒有可匯入的單字資料。");
+      return parsed;
+    }
+    function renderWords() {
+      const tbody = document.getElementById("wordTable");
+      document.getElementById("wordCount").textContent = "目前 " + words.length + " 個單字";
+      tbody.innerHTML = words.length ? words.map((item, index) => `
+        <tr>
+          <td><input value="${escapeAttr(item.word)}" data-field="word" data-index="${index}"></td>
+          <td><input value="${escapeAttr(item.meaning_zh)}" data-field="meaning_zh" data-index="${index}"></td>
+          <td><input value="${escapeAttr(item.sentence)}" data-field="sentence" data-index="${index}"></td>
+          <td><button class="danger" data-delete="${index}">刪除</button></td>
+        </tr>
+      `).join("") : `<tr><td colspan="4">目前沒有題庫，請匯入或使用示範題庫。</td></tr>`;
+    }
+    function escapeAttr(text) {
+      return String(text).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+    }
+    function percent(value) {
+      return Math.round(Number(value || 0)) + "%";
+    }
+    function renderDashboard() {
+      records = load(KEYS.records, []);
+      const students = new Set(records.map(r => r.studentName || r.name || "訪客"));
+      const avg = records.length ? records.reduce((sum, r) => sum + Number(r.accuracy || 0), 0) / records.length : 0;
+      document.getElementById("stats").innerHTML = [
+        ["總作答次數", records.length],
+        ["參與學生人數", students.size],
+        ["平均正確率", percent(avg)],
+        ["題庫單字數", words.length]
+      ].map(([label, value]) => `<div class="stat">${label}<strong>${value}</strong></div>`).join("");
+
+      document.getElementById("levelBars").innerHTML = [1,2,3,4,5].map(level => {
+        const levelRecords = records.filter(r => Number(r.level) === level);
+        const levelAvg = levelRecords.length ? levelRecords.reduce((sum, r) => sum + Number(r.accuracy || 0), 0) / levelRecords.length : 0;
+        return `<div class="bar-row">
+          <div class="bar-label"><span>Level ${level}</span><span>${levelRecords.length} 次 · ${percent(levelAvg)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(0, Math.min(100, levelAvg))}%"></div></div>
+        </div>`;
+      }).join("");
+
+      const wrongMap = new Map();
+      records.forEach(record => (record.results || []).forEach(result => {
+        if (result.isCorrect) return;
+        const key = result.word;
+        const old = wrongMap.get(key) || { word: result.word, meaning_zh: result.meaning_zh, count: 0 };
+        old.count += 1;
+        wrongMap.set(key, old);
+      }));
+      const wrongRows = [...wrongMap.values()].sort((a,b) => b.count - a.count).slice(0, 5);
+      document.getElementById("wrongWords").innerHTML = wrongRows.length ? wrongRows.map((item, index) =>
+        `<tr><td>${index + 1}</td><td>${item.word}</td><td>${item.meaning_zh}</td><td>${item.count}</td></tr>`
+      ).join("") : `<tr><td colspan="4">暫時沒有錯題資料。</td></tr>`;
+
+      document.getElementById("recordTable").innerHTML = records.length ? records.slice().reverse().map(record => {
+        const wrong = (record.results || []).filter(r => !r.isCorrect).map(r => r.word).join("、") || "太好了！全部答對！";
+        return `<tr>
+          <td>${record.datetime || ""}</td>
+          <td>${record.studentName || "訪客"}</td>
+          <td>Level ${record.level || ""}</td>
+          <td>${record.correct || 0}/${record.total || 0}</td>
+          <td>${percent(record.accuracy)}</td>
+          <td>${wrong}</td>
+        </tr>`;
+      }).join("") : `<tr><td colspan="6">暫時沒有學生作答記錄。</td></tr>`;
+    }
+    function copyCsv() {
+      if (!records.length) return show("recordMsg", "暫時沒有記錄可以匯出。", "error");
+      const header = ["日期時間","學生","Level","總題數","答對","答錯","正確率","錯題"];
+      const rows = records.map(r => [
+        r.datetime || "",
+        r.studentName || "訪客",
+        "Level " + (r.level || ""),
+        r.total || 0,
+        r.correct || 0,
+        r.wrong || 0,
+        percent(r.accuracy),
+        (r.results || []).filter(x => !x.isCorrect).map(x => x.word).join(" ")
+      ]);
+      const csv = [header, ...rows].map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+      navigator.clipboard.writeText(csv).then(
+        () => show("recordMsg", "已複製 CSV 到剪貼簿。", "ok"),
+        () => show("recordMsg", "剪貼簿不可用，請改用瀏覽器允許權限後再試。", "error")
+      );
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      if (document.getElementById("passwordInput").value === teacherPassword()) {
+        document.getElementById("login").classList.add("hidden");
+      } else {
+        show("loginMsg", "密碼錯誤，請再試一次。", "error");
+      }
+    });
+    document.getElementById("passwordInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") document.getElementById("loginBtn").click();
+    });
+    document.querySelectorAll("[data-scroll]").forEach(btn => btn.addEventListener("click", () => {
+      document.getElementById(btn.dataset.scroll).scrollIntoView({ behavior: "smooth" });
+    }));
+    document.getElementById("importBtn").addEventListener("click", () => {
+      try {
+        words = parsePaste(document.getElementById("pasteBox").value);
+        renderWords();
+        show("wordMsg", "已匯入 " + words.length + " 個單字，記得按「儲存題庫」。", "ok");
+      } catch (error) {
+        show("wordMsg", error.message, "error");
+      }
+    });
+    document.getElementById("demoBtn").addEventListener("click", () => {
+      words = demoWords.slice();
+      renderWords();
+      show("wordMsg", "已載入 15 個示範單字。", "ok");
+    });
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const clean = words.map(normalizeWord).filter(item => item.word && item.meaning_zh && item.sentence);
+      if (!clean.length) return show("wordMsg", "題庫為空，無法儲存。", "error");
+      words = clean;
+      save(KEYS.words, words);
+      renderWords();
+      renderDashboard();
+      show("wordMsg", "題庫已儲存。學生頁重新整理後會讀取最新題庫。", "ok");
+    });
+    document.getElementById("clearWordsBtn").addEventListener("click", () => {
+      if (!confirm("確定清空題庫？")) return;
+      words = [];
+      save(KEYS.words, words);
+      renderWords();
+      renderDashboard();
+      show("wordMsg", "題庫已清空。", "ok");
+    });
+    document.getElementById("addWordBtn").addEventListener("click", () => {
+      const item = normalizeWord({
+        word: document.getElementById("newWord").value,
+        meaning_zh: document.getElementById("newMeaning").value,
+        sentence: document.getElementById("newSentence").value
+      });
+      if (!item.word || !item.meaning_zh || !item.sentence) return show("wordMsg", "請填妥英文單字、中文翻譯和句子。", "error");
+      words.push(item);
+      ["newWord","newMeaning","newSentence"].forEach(id => document.getElementById(id).value = "");
+      renderWords();
+      show("wordMsg", "已新增單字，記得按「儲存題庫」。", "ok");
+    });
+    document.getElementById("wordTable").addEventListener("input", event => {
+      const field = event.target.dataset.field;
+      if (!field) return;
+      words[Number(event.target.dataset.index)][field] = event.target.value;
+    });
+    document.getElementById("wordTable").addEventListener("click", event => {
+      const index = event.target.dataset.delete;
+      if (index === undefined) return;
+      words.splice(Number(index), 1);
+      renderWords();
+      show("wordMsg", "已刪除單字，記得按「儲存題庫」。", "ok");
+    });
+    document.getElementById("copyCsvBtn").addEventListener("click", copyCsv);
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+      renderDashboard();
+      show("recordMsg", "看板已重新整理。", "ok");
+    });
+    document.getElementById("clearRecordsBtn").addEventListener("click", () => {
+      if (!confirm("確定清空所有學生記錄？")) return;
+      records = [];
+      save(KEYS.records, records);
+      renderDashboard();
+      show("recordMsg", "學生記錄已清空。", "ok");
+    });
+    document.getElementById("changePasswordBtn").addEventListener("click", () => {
+      const value = document.getElementById("newPassword").value.trim();
+      if (value.length < 4) return show("settingsMsg", "新密碼至少需要 4 個字元。", "error");
+      localStorage.setItem(KEYS.password, value);
+      document.getElementById("newPassword").value = "";
+      show("settingsMsg", "教師密碼已更新。", "ok");
+    });
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      document.getElementById("passwordInput").value = "";
+      document.getElementById("login").classList.remove("hidden");
+    });
+
+    if (!localStorage.getItem(KEYS.words)) save(KEYS.words, words);
+    renderWords();
+    renderDashboard();
+  </script>
+</body>
+</html>

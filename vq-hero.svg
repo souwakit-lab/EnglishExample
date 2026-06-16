@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Vocabulary Quest cartoon hero">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8be6ff"/>
+      <stop offset="1" stop-color="#ffe58a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#39607a" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect width="720" height="420" rx="38" fill="url(#sky)"/>
+  <path d="M0 320c90-48 175-36 258-10 85 27 168 25 250-10 80-35 150-18 212 20v100H0z" fill="#7bd887"/>
+  <path d="M80 310c60-76 126-116 198-120 72-5 129 26 175 83 56-62 118-82 187-62v109H80z" fill="#fff7c5" opacity=".65"/>
+  <g filter="url(#shadow)">
+    <path d="M322 120c44-35 99-27 128 15 28 41 17 97-25 127-39 28-97 23-129-12-34-37-26-91 26-130z" fill="#fff"/>
+    <path d="M345 146c-10-28 2-56 28-66 25 15 37 39 34 70z" fill="#ffb36b"/>
+    <circle cx="352" cy="174" r="20" fill="#354052"/>
+    <circle cx="418" cy="174" r="20" fill="#354052"/>
+    <circle cx="358" cy="168" r="6" fill="#fff"/>
+    <circle cx="424" cy="168" r="6" fill="#fff"/>
+    <path d="M376 195l17 15 17-15c-8 30-26 30-34 0z" fill="#ffca3a"/>
+    <path d="M315 220c-45 8-70 35-78 78 45 5 80-12 103-50z" fill="#5aa9ff"/>
+    <path d="M454 220c45 8 70 35 78 78-45 5-80-12-103-50z" fill="#5aa9ff"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="90" y="188" width="145" height="105" rx="22" fill="#fff"/>
+    <rect x="105" y="207" width="115" height="16" rx="8" fill="#69d2a0"/>
+    <rect x="105" y="236" width="88" height="14" rx="7" fill="#ffd36d"/>
+    <rect x="105" y="263" width="102" height="14" rx="7" fill="#ff8ea3"/>
+    <path d="M142 156c18-22 45-22 63 0l-31 31z" fill="#ffca3a"/>
+  </g>
+  <g filter="url(#shadow)">
+    <path d="M545 240l48-64 48 64-48 64z" fill="#ffc845"/>
+    <rect x="552" y="235" width="82" height="74" rx="12" fill="#f59e0b"/>
+    <rect x="562" y="221" width="62" height="24" rx="10" fill="#ffdf72"/>
+    <circle cx="594" cy="270" r="13" fill="#fff7c2"/>
+  </g>
+  <g fill="#fff" opacity=".9">
+    <circle cx="84" cy="84" r="15"/>
+    <circle cx="132" cy="64" r="9"/>
+    <circle cx="628" cy="82" r="14"/>
+    <circle cx="586" cy="48" r="8"/>
+  </g>
+  <text x="360" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="800" fill="#27364a">Vocabulary Quest</text>
+</svg>

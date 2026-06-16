@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 180" role="img" aria-label="Level 2 icon">
+  <rect width="220" height="180" rx="28" fill="#fff2d2"/>
+  <path d="M55 126V53c0-11 9-20 20-20h82c11 0 20 9 20 20v73c-36-18-75-18-122 0z" fill="#ff8aa6"/>
+  <path d="M70 58h72M70 84h88M70 110h58" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="169" cy="126" r="32" fill="#69d2a0"/>
+  <text x="169" y="136" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">2</text>
+</svg>
