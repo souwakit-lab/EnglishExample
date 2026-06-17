@@ -153,7 +153,7 @@
     <section class="login-card">
       <img src="vq-teacher-ai.png" alt="貓頭鷹老師插圖">
       <h1>教師管理入口</h1>
-      <p class="mini">請輸入教師密碼。預設密碼為 teacher123。</p>
+      <p class="mini">請輸入教師密碼。預設密碼為 teacher123，修改後會同步到 Google Sheets。</p>
       <input id="passwordInput" type="password" placeholder="教師密碼" autocomplete="current-password">
       <div class="row" style="margin-top:12px">
         <button id="loginBtn" class="good">進入管理面板</button>
@@ -180,7 +180,7 @@
       <article id="bank" class="panel">
         <img class="side-art" src="vq-teacher-ai.png" alt="貓頭鷹老師">
         <h2><span>📚</span>題庫管理</h2>
-        <p class="mini">可從 Excel 複製三欄資料貼上，也可以手動新增。欄位順序：英文單字、中文翻譯、英文句子。</p>
+        <p class="mini">可從 Excel / Google Sheets 複製三欄資料貼上，也可以手動新增。按「儲存題庫」後會寫入 Google Sheets。欄位順序：英文單字、中文翻譯、英文句子。</p>
         <textarea id="pasteBox" placeholder="word&#9;meaning_zh&#9;sentence&#10;explore&#9;探索&#9;We will explore the forest tomorrow."></textarea>
         <div class="row" style="margin-top:12px">
           <button id="importBtn">匯入貼上資料</button>
@@ -216,7 +216,7 @@
     <section id="dashboard" class="panel" style="margin-top:18px">
       <img class="side-art" src="vq-dashboard-ai.png" alt="數據看板插圖">
       <h2><span>📊</span>數據看板</h2>
-      <p class="mini">學生在同一個 GitHub Pages 網站完成練習後，紀錄會自動寫入瀏覽器 localStorage，教師頁重新整理即可看到。</p>
+      <p class="mini">學生完成練習後，紀錄會寫入 Google Sheets；教師頁按「重新整理看板」即可看到最新資料。</p>
       <div class="stats" id="stats"></div>
       <h3>Level 表現</h3>
       <div id="levelBars"></div>
@@ -256,11 +256,8 @@
   </main>
 
   <script>
-    const KEYS = {
-      words: "vocabularyQuest_words",
-      records: "vocabularyQuest_records",
-      password: "vocabularyQuest_teacherPassword"
-    };
+    const API_URL = "https://script.google.com/macros/s/AKfycbxKwOdZxkhPd4uZa73aMZWfbFoljDTyOYWfIwlcjeIC00-wOM8FkwLlt3DZ1ytSuLxg/exec";
+
     const demoWords = [
       ["explore","探索","We will explore the forest tomorrow."],
       ["protect","保護","We should protect animals and nature."],
@@ -279,27 +276,74 @@
       ["solution","解決方法","We need to find a solution to the problem."]
     ].map(([word, meaning_zh, sentence]) => ({ word, meaning_zh, sentence }));
 
-    let words = load(KEYS.words, demoWords);
-    let records = load(KEYS.records, []);
+    let words = [];
+    let records = [];
+    let teacherToken = "";
 
-    function load(key, fallback) {
-      try {
-        const raw = localStorage.getItem(key);
-        return raw ? JSON.parse(raw) : fallback;
-      } catch (error) {
-        return fallback;
-      }
+    function apiReady() {
+      return API_URL && !API_URL.includes("https://script.google.com/macros/s/AKfycbxKwOdZxkhPd4uZa73aMZWfbFoljDTyOYWfIwlcjeIC00-wOM8FkwLlt3DZ1ytSuLxg/exec");
     }
-    function save(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+    function apiGet(action, params = {}) {
+      return new Promise((resolve, reject) => {
+        if (!apiReady()) return reject(new Error("尚未設定 Apps Script API_URL。"));
+        const callbackName = "vq_cb_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        const query = new URLSearchParams({ action, callback: callbackName, ...params });
+        const script = document.createElement("script");
+        let timer;
+        window[callbackName] = data => {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+          resolve(data);
+        };
+        script.onerror = () => {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+          reject(new Error("無法連接 Apps Script API。"));
+        };
+        timer = setTimeout(() => {
+          delete window[callbackName];
+          script.remove();
+          reject(new Error("Apps Script API 回應逾時。"));
+        }, 10000);
+        script.src = API_URL + "?" + query.toString();
+        document.body.appendChild(script);
+      });
+    }
+    function apiPost(action, payload = {}) {
+      return new Promise(resolve => {
+        if (!apiReady()) return resolve(false);
+        const iframeName = "vq_post_frame";
+        let iframe = document.querySelector("iframe[name='" + iframeName + "']");
+        if (!iframe) {
+          iframe = document.createElement("iframe");
+          iframe.name = iframeName;
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
+        }
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = API_URL;
+        form.target = iframeName;
+        form.style.display = "none";
+        const actionInput = document.createElement("input");
+        actionInput.name = "action";
+        actionInput.value = action;
+        const payloadInput = document.createElement("input");
+        payloadInput.name = "payload";
+        payloadInput.value = JSON.stringify({ action, ...payload });
+        form.append(actionInput, payloadInput);
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+        setTimeout(() => resolve(true), 1200);
+      });
     }
     function show(id, text, type = "") {
       const el = document.getElementById(id);
       el.textContent = text;
       el.className = "message show " + type;
-    }
-    function teacherPassword() {
-      return localStorage.getItem(KEYS.password) || "teacher123";
     }
     function normalizeWord(item) {
       return {
@@ -342,7 +386,6 @@
       return Math.round(Number(value || 0)) + "%";
     }
     function renderDashboard() {
-      records = load(KEYS.records, []);
       const students = new Set(records.map(r => r.studentName || r.name || "訪客"));
       const avg = records.length ? records.reduce((sum, r) => sum + Number(r.accuracy || 0), 0) / records.length : 0;
       document.getElementById("stats").innerHTML = [
@@ -386,6 +429,26 @@
         </tr>`;
       }).join("") : `<tr><td colspan="6">暫時沒有學生作答記錄。</td></tr>`;
     }
+    async function loadRemoteData(showStatus = false) {
+      try {
+        const [wordData, recordData] = await Promise.all([
+          apiGet("getWords"),
+          apiGet("getRecords")
+        ]);
+        if (!wordData.ok) throw new Error(wordData.error || "讀取題庫失敗。");
+        if (!recordData.ok) throw new Error(recordData.error || "讀取紀錄失敗。");
+        words = Array.isArray(wordData.words) ? wordData.words.map(normalizeWord).filter(w => w.word && w.meaning_zh && w.sentence) : [];
+        records = Array.isArray(recordData.records) ? recordData.records : [];
+        renderWords();
+        renderDashboard();
+        if (showStatus) show("recordMsg", "已從 Google Sheets 重新整理。", "ok");
+      } catch (error) {
+        renderWords();
+        renderDashboard();
+        if (showStatus) show("recordMsg", error.message, "error");
+        else show("loginMsg", error.message, "error");
+      }
+    }
     function copyCsv() {
       if (!records.length) return show("recordMsg", "暫時沒有記錄可以匯出。", "error");
       const header = ["日期時間","學生","Level","總題數","答對","答錯","正確率","錯題"];
@@ -406,11 +469,20 @@
       );
     }
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
-      if (document.getElementById("passwordInput").value === teacherPassword()) {
-        document.getElementById("login").classList.add("hidden");
-      } else {
-        show("loginMsg", "密碼錯誤，請再試一次。", "error");
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      if (!apiReady()) return show("loginMsg", "請先在 teacher.html 內填入 Apps Script Web App URL。", "error");
+      const password = document.getElementById("passwordInput").value;
+      try {
+        const data = await apiGet("verifyPassword", { password });
+        if (data.ok) {
+          teacherToken = password;
+          document.getElementById("login").classList.add("hidden");
+          await loadRemoteData(false);
+        } else {
+          show("loginMsg", "密碼錯誤，請再試一次。", "error");
+        }
+      } catch (error) {
+        show("loginMsg", error.message, "error");
       }
     });
     document.getElementById("passwordInput").addEventListener("keydown", event => {
@@ -431,23 +503,24 @@
     document.getElementById("demoBtn").addEventListener("click", () => {
       words = demoWords.slice();
       renderWords();
-      show("wordMsg", "已載入 15 個示範單字。", "ok");
+      show("wordMsg", "已載入 15 個示範單字，記得按「儲存題庫」。", "ok");
     });
-    document.getElementById("saveBtn").addEventListener("click", () => {
+    document.getElementById("saveBtn").addEventListener("click", async () => {
       const clean = words.map(normalizeWord).filter(item => item.word && item.meaning_zh && item.sentence);
       if (!clean.length) return show("wordMsg", "題庫為空，無法儲存。", "error");
       words = clean;
-      save(KEYS.words, words);
       renderWords();
-      renderDashboard();
-      show("wordMsg", "題庫已儲存。學生頁重新整理後會讀取最新題庫。", "ok");
+      show("wordMsg", "正在儲存到 Google Sheets...", "");
+      await apiPost("setWords", { password: teacherToken, words });
+      await loadRemoteData(false);
+      show("wordMsg", "題庫已儲存到 Google Sheets。學生頁重新整理後會讀取最新題庫。", "ok");
     });
-    document.getElementById("clearWordsBtn").addEventListener("click", () => {
+    document.getElementById("clearWordsBtn").addEventListener("click", async () => {
       if (!confirm("確定清空題庫？")) return;
       words = [];
-      save(KEYS.words, words);
-      renderWords();
-      renderDashboard();
+      show("wordMsg", "正在清空 Google Sheets 題庫...", "");
+      await apiPost("setWords", { password: teacherToken, words: [] });
+      await loadRemoteData(false);
       show("wordMsg", "題庫已清空。", "ok");
     });
     document.getElementById("addWordBtn").addEventListener("click", () => {
@@ -475,30 +548,35 @@
       show("wordMsg", "已刪除單字，記得按「儲存題庫」。", "ok");
     });
     document.getElementById("copyCsvBtn").addEventListener("click", copyCsv);
-    document.getElementById("refreshBtn").addEventListener("click", () => {
-      renderDashboard();
-      show("recordMsg", "看板已重新整理。", "ok");
-    });
-    document.getElementById("clearRecordsBtn").addEventListener("click", () => {
+    document.getElementById("refreshBtn").addEventListener("click", () => loadRemoteData(true));
+    document.getElementById("clearRecordsBtn").addEventListener("click", async () => {
       if (!confirm("確定清空所有學生記錄？")) return;
-      records = [];
-      save(KEYS.records, records);
-      renderDashboard();
+      show("recordMsg", "正在清空學生記錄...", "");
+      await apiPost("clearRecords", { password: teacherToken });
+      await loadRemoteData(false);
       show("recordMsg", "學生記錄已清空。", "ok");
     });
-    document.getElementById("changePasswordBtn").addEventListener("click", () => {
+    document.getElementById("changePasswordBtn").addEventListener("click", async () => {
       const value = document.getElementById("newPassword").value.trim();
       if (value.length < 4) return show("settingsMsg", "新密碼至少需要 4 個字元。", "error");
-      localStorage.setItem(KEYS.password, value);
-      document.getElementById("newPassword").value = "";
-      show("settingsMsg", "教師密碼已更新。", "ok");
+      show("settingsMsg", "正在更新 Google Sheets 密碼...", "");
+      await apiPost("changePassword", { oldPassword: teacherToken, newPassword: value });
+      await new Promise(r => setTimeout(r, 800));
+      const check = await apiGet("verifyPassword", { password: value });
+      if (check.ok) {
+        teacherToken = value;
+        document.getElementById("newPassword").value = "";
+        show("settingsMsg", "教師密碼已更新，其他裝置也會使用新密碼。", "ok");
+      } else {
+        show("settingsMsg", "密碼更新可能失敗，請確認舊密碼是否正確。", "error");
+      }
     });
     document.getElementById("logoutBtn").addEventListener("click", () => {
+      teacherToken = "";
       document.getElementById("passwordInput").value = "";
       document.getElementById("login").classList.remove("hidden");
     });
 
-    if (!localStorage.getItem(KEYS.words)) save(KEYS.words, words);
     renderWords();
     renderDashboard();
   </script>

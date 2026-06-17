@@ -210,7 +210,7 @@
             <button id="startBtn" class="good">開始闖關</button>
           </div>
         </div>
-        <p class="mini">題庫會自動讀取教師頁儲存的資料。若沒有題庫，可先請老師在 teacher.html 儲存題庫。</p>
+        <p class="mini">題庫會自動從 Google Sheets 讀取。若沒有題庫，可先請老師在 teacher.html 儲存題庫。</p>
         <div id="homeMsg" class="message"></div>
 
         <div class="level-grid" id="levelGrid"></div>
@@ -268,9 +268,9 @@
   </main>
 
   <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxKwOdZxkhPd4uZa73aMZWfbFoljDTyOYWfIwlcjeIC00-wOM8FkwLlt3DZ1ytSuLxg/exec";
+
     const KEYS = {
-      words: "vocabularyQuest_words",
-      records: "vocabularyQuest_records",
       name: "vocabularyQuest_student_name",
       lastResult: "vocabularyQuest_student_lastResult"
     };
@@ -299,7 +299,7 @@
       5: ["無提示填字", "只看例句作答", "vq-level-5-ai.png"]
     };
 
-    let words = loadWords();
+    let words = demoWords.slice();
     let selectedLevel = 1;
     let quizItems = [];
     let currentIndex = 0;
@@ -309,6 +309,66 @@
     let results = [];
     let retrySource = null;
 
+    function apiReady() {
+      return API_URL && !API_URL.includes("https://script.google.com/macros/s/AKfycbxKwOdZxkhPd4uZa73aMZWfbFoljDTyOYWfIwlcjeIC00-wOM8FkwLlt3DZ1ytSuLxg/exec");
+    }
+    function apiGet(action, params = {}) {
+      return new Promise((resolve, reject) => {
+        if (!apiReady()) return reject(new Error("尚未設定 Apps Script API_URL。"));
+        const callbackName = "vq_cb_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        const query = new URLSearchParams({ action, callback: callbackName, ...params });
+        const script = document.createElement("script");
+        let timer;
+        window[callbackName] = data => {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+          resolve(data);
+        };
+        script.onerror = () => {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+          reject(new Error("無法連接 Apps Script API。"));
+        };
+        timer = setTimeout(() => {
+          delete window[callbackName];
+          script.remove();
+          reject(new Error("Apps Script API 回應逾時。"));
+        }, 10000);
+        script.src = API_URL + "?" + query.toString();
+        document.body.appendChild(script);
+      });
+    }
+    function apiPost(action, payload = {}) {
+      return new Promise(resolve => {
+        if (!apiReady()) return resolve(false);
+        const iframeName = "vq_post_frame";
+        let iframe = document.querySelector("iframe[name='" + iframeName + "']");
+        if (!iframe) {
+          iframe = document.createElement("iframe");
+          iframe.name = iframeName;
+          iframe.style.display = "none";
+          document.body.appendChild(iframe);
+        }
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = API_URL;
+        form.target = iframeName;
+        form.style.display = "none";
+        const actionInput = document.createElement("input");
+        actionInput.name = "action";
+        actionInput.value = action;
+        const payloadInput = document.createElement("input");
+        payloadInput.name = "payload";
+        payloadInput.value = JSON.stringify({ action, ...payload });
+        form.append(actionInput, payloadInput);
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
+        setTimeout(() => resolve(true), 1000);
+      });
+    }
     function safeLoad(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
@@ -320,10 +380,30 @@
     function safeSave(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
     }
-    function loadWords() {
-      const stored = safeLoad(KEYS.words, null);
-      if (Array.isArray(stored)) return stored;
-      return demoWords.slice();
+    function normalizeWord(item) {
+      return {
+        word: String(item.word || "").trim(),
+        meaning_zh: String(item.meaning_zh || item.meaning || "").trim(),
+        sentence: String(item.sentence || "").trim()
+      };
+    }
+    async function loadRemoteWords() {
+      if (!apiReady()) {
+        words = demoWords.slice();
+        updateHomeStatus("尚未設定 Apps Script API_URL，目前使用示範題庫。");
+        return;
+      }
+      updateHomeStatus("正在從 Google Sheets 讀取題庫...");
+      try {
+        const data = await apiGet("getWords");
+        if (!data.ok) throw new Error(data.error || "讀取題庫失敗。");
+        const clean = (data.words || []).map(normalizeWord).filter(w => w.word && w.meaning_zh && w.sentence);
+        words = clean.length ? clean : demoWords.slice();
+        updateHomeStatus(clean.length ? "目前題庫共有 " + clean.length + " 個單字，來源：Google Sheets。" : "Google Sheets 暫時沒有題庫，目前使用示範題庫。");
+      } catch (error) {
+        words = demoWords.slice();
+        updateHomeStatus("無法讀取 Google Sheets，暫時使用示範題庫。" + error.message);
+      }
     }
     function show(id, text, type = "") {
       const el = document.getElementById(id);
@@ -354,7 +434,7 @@
     }
     function makeChoices(item, field) {
       const correct = item[field];
-      const wrongs = shuffle(words.filter(w => w.word !== item.word).map(w => w[field])).slice(0, 3);
+      const wrongs = shuffle(words.filter(w => w.word !== item.word).map(w => w[field]).filter(Boolean)).slice(0, 3);
       return shuffle([correct, ...wrongs]);
     }
     function questionFor(item) {
@@ -368,7 +448,7 @@
       const name = document.getElementById("studentName").value.trim() || "訪客";
       localStorage.setItem(KEYS.name, name);
       if (!selectedLevel) return show("homeMsg", "請先選擇 Level。", "error");
-      words = loadWords().filter(w => w.word && w.meaning_zh && w.sentence);
+      words = words.map(normalizeWord).filter(w => w.word && w.meaning_zh && w.sentence);
       if (!words.length) return show("homeMsg", "目前沒有題庫，請先請老師在 teacher.html 儲存題庫。", "error");
       const base = sourceItems || words;
       const countValue = document.getElementById("questionCount").value;
@@ -462,7 +542,7 @@
         finishQuiz();
       }
     }
-    function finishQuiz() {
+    async function finishQuiz() {
       const total = quizItems.length;
       const wrong = total - score;
       const accuracy = total ? Math.round((score / total) * 100) : 0;
@@ -477,12 +557,15 @@
         accuracy,
         results
       };
-      const records = safeLoad(KEYS.records, []);
-      records.push(record);
-      safeSave(KEYS.records, records);
       safeSave(KEYS.lastResult, record);
       renderResult(record);
       showSection("result");
+      if (apiReady()) {
+        await apiPost("addRecord", { record });
+        document.getElementById("resultMsg").textContent = wrong ? "成績已提交到 Google Sheets。可以重練錯題。" : "太好了！全部答對！成績已提交到 Google Sheets。";
+      } else {
+        document.getElementById("resultMsg").textContent = "尚未設定 Apps Script API_URL，成績只暫存在本機。";
+      }
     }
     function renderResult(record) {
       document.getElementById("scoreText").textContent = record.correct + "/" + record.total;
@@ -490,7 +573,7 @@
       document.getElementById("resultImage").src = record.wrong ? "vq-try-again-ai.png" : "vq-correct-ai.png";
       const wrongItems = record.results.filter(item => !item.isCorrect);
       document.getElementById("retryWrongBtn").disabled = wrongItems.length === 0;
-      document.getElementById("resultMsg").textContent = wrongItems.length ? "成績已自動儲存到教師看板。可以重練錯題。" : "太好了！全部答對！成績已自動儲存到教師看板。";
+      document.getElementById("resultMsg").textContent = wrongItems.length ? "正在提交成績到 Google Sheets..." : "正在提交成績到 Google Sheets...";
       document.getElementById("wrongTable").innerHTML = wrongItems.length ? wrongItems.map(item => `
         <tr>
           <td>${item.question}</td>
@@ -510,12 +593,11 @@
         </button>
       `).join("");
     }
-    function updateHomeStatus() {
-      words = loadWords();
+    function updateHomeStatus(text) {
       const clean = words.filter(w => w.word && w.meaning_zh && w.sentence);
-      document.getElementById("wordStatus").textContent = clean.length
-        ? "目前題庫共有 " + clean.length + " 個單字。"
-        : "目前沒有題庫，請先請老師在 teacher.html 儲存題庫。";
+      document.getElementById("wordStatus").textContent = text || (clean.length
+        ? "目前題庫共有 " + clean.length + " 個單字，來源：Google Sheets。"
+        : "目前沒有題庫，請先請老師在 teacher.html 儲存題庫。");
     }
 
     document.getElementById("levelGrid").addEventListener("click", event => {
@@ -539,8 +621,8 @@
     document.getElementById("nextBtn").addEventListener("click", nextQuestion);
     document.getElementById("quitBtn").addEventListener("click", () => showSection("home"));
     document.getElementById("againBtn").addEventListener("click", () => startQuiz());
-    document.getElementById("backHomeBtn").addEventListener("click", () => {
-      updateHomeStatus();
+    document.getElementById("backHomeBtn").addEventListener("click", async () => {
+      await loadRemoteWords();
       showSection("home");
     });
     document.getElementById("retryWrongBtn").addEventListener("click", () => {
@@ -552,9 +634,8 @@
     });
 
     document.getElementById("studentName").value = localStorage.getItem(KEYS.name) || "";
-    if (!localStorage.getItem(KEYS.words)) safeSave(KEYS.words, demoWords);
     renderLevels();
-    updateHomeStatus();
+    loadRemoteWords();
   </script>
 </body>
 </html>
